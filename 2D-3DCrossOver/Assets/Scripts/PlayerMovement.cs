@@ -8,20 +8,24 @@ public class PlayerMovement : MonoBehaviour {
 
     private Rigidbody rigBody;
     private SpriteRenderer sprite;
+    private float lastYposition = 0;
     private bool isJumping = false;
     private bool isRunning = false;
     private bool isIdling = true;
 
     private void Start() {
+        // set gravity to be stronger
+        Physics.gravity = new Vector3(0f, -15f, 0f);
+
         rigBody = GetComponent<Rigidbody>();
         sprite = GetComponent<SpriteRenderer>();
         StartCoroutine(IdleAnimation());
     }
 
     private void OnCollisionEnter(Collision collision) {
-        StopAllCoroutines();
-
         if (collision.transform.tag == "Platform") {
+            StopAllCoroutines();
+
             if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow) ||
                 Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)) {
                 StartCoroutine(RunAnimation());
@@ -29,19 +33,36 @@ public class PlayerMovement : MonoBehaviour {
             else {
                 StartCoroutine(IdleAnimation());
             }
-        }
 
-        isJumping = false;
+            isJumping = false;
+        }
     }
 
     // ---------------------------------------------------------------------------------
     // CHARACTER CONTROLS
     // ---------------------------------------------------------------------------------
 
+    // Design flaw - player can walk off ledge, falling won't trigger until the player "jumps"
+    // Rework required
     private IEnumerator Jump() {
+        bool isFalling = false;
+        
+        // Start jump
         isJumping = true;
         yield return StartCoroutine(JumpAnimation());
-        rigBody.AddForce(Vector3.up * jumpHeight, ForceMode.Impulse);
+        rigBody.AddForce(Vector3.up * jumpHeight, ForceMode.VelocityChange);
+
+        // Wait until falling
+        while (!isFalling) {
+            yield return new WaitForSeconds(0.5f);
+
+            if (!PlayerUtils.CharacterFalling(lastYposition, transform.position.y)) {
+                isJumping = true;
+                isFalling = true;
+            }
+        }
+
+        StartCoroutine(FallAnimation());
     }
 
     private void MoveLeft() {
@@ -108,59 +129,55 @@ public class PlayerMovement : MonoBehaviour {
     // UPDATE PROCESS
     // ---------------------------------------------------------------------------------
 
-    private void Update() {
-
-        if (Input.GetKeyDown(KeyCode.Space)) {
+    private void FixedUpdate() {
+        // Jump if not jumping already
+        if (Input.GetKeyDown(KeyCode.Space) && !isJumping) {
             StopAllCoroutines();
             StartCoroutine(Jump());
         }
 
+        // Move character
         if (Input.GetKey(KeyCode.LeftArrow) && Input.GetKey(KeyCode.RightArrow) ||
             Input.GetKey(KeyCode.UpArrow) && Input.GetKey(KeyCode.DownArrow)) {
-
             StopMove();
         }
-
         else if (Input.GetKey(KeyCode.LeftArrow) && Input.GetKey(KeyCode.UpArrow)) {
             MoveLeft();
             MoveUp();
         }
-
         else if (Input.GetKey(KeyCode.LeftArrow) && Input.GetKey(KeyCode.DownArrow)) {
             MoveLeft();
             MoveDown();
         }
-
         else if (Input.GetKey(KeyCode.RightArrow) && Input.GetKey(KeyCode.UpArrow)) {
             MoveRight();
             MoveUp();
         }
-
         else if (Input.GetKey(KeyCode.RightArrow) && Input.GetKey(KeyCode.DownArrow)) {
             MoveRight();
             MoveDown();
         }
-
         else if (Input.GetKey(KeyCode.LeftArrow)) {
             MoveLeft();
         }
-
         else if (Input.GetKey(KeyCode.RightArrow)) {
             MoveRight();
         }
-
         else if (Input.GetKey(KeyCode.UpArrow)) {
             MoveUp();
         }
-
         else if (Input.GetKey(KeyCode.DownArrow)) {
             MoveDown();
         }
 
+        // Player stops moving
         if (Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow) ||
             Input.GetKeyUp(KeyCode.UpArrow) || Input.GetKeyUp(KeyCode.DownArrow)) {
             StopMove();
         }
+
+        // Save last yPosition
+        lastYposition = transform.position.y;
     }
 
     // ---------------------------------------------------------------------------------
@@ -176,6 +193,15 @@ public class PlayerMovement : MonoBehaviour {
         }
 
         yield return null;
+    }
+
+    private IEnumerator FallAnimation() {
+        while (true) {
+            for (int i = 0; i < 2; i++) {
+                sprite.sprite = Resources.Load<Sprite>("Sprites/adventurer-fall-0" + i);
+                yield return new WaitForSeconds(animationSpeed);
+            }
+        }
     }
 
     private IEnumerator RunAnimation() {

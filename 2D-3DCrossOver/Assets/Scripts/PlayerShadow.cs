@@ -1,19 +1,17 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerShadow : MonoBehaviour {
-    private Transform player;
     private SpriteRenderer spriteRenderer;
     private Sprite defaultSprite;
+    private Transform player;
 
-	private void Start () {
+    private void Start () {
         player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         defaultSprite = spriteRenderer.sprite;
     }
 
-    private void Update () {
+    private void FixedUpdate () {
         RaycastHit hit;
 
         if (Physics.Raycast(player.position, Vector3.down, out hit)) {
