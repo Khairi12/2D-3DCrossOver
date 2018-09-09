@@ -129,14 +129,14 @@ public class PlayerMovement : MonoBehaviour {
     // UPDATE PROCESS
     // ---------------------------------------------------------------------------------
 
-    private void FixedUpdate() {
-        // Jump if not jumping already
+    private void Update() {
+        // Jump
         if (Input.GetKeyDown(KeyCode.Space) && !isJumping) {
             StopAllCoroutines();
             StartCoroutine(Jump());
         }
 
-        // Move character
+        // Directional Movement
         if (Input.GetKey(KeyCode.LeftArrow) && Input.GetKey(KeyCode.RightArrow) ||
             Input.GetKey(KeyCode.UpArrow) && Input.GetKey(KeyCode.DownArrow)) {
             StopMove();

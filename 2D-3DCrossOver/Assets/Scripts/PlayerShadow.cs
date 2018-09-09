@@ -11,12 +11,12 @@ public class PlayerShadow : MonoBehaviour {
         defaultSprite = spriteRenderer.sprite;
     }
 
-    private void FixedUpdate () {
+    private void Update () {
         RaycastHit hit;
 
         if (Physics.Raycast(player.position, Vector3.down, out hit)) {
             spriteRenderer.sprite = defaultSprite;
-            transform.position = new Vector3(player.position.x, hit.point.y + 0.1f, player.position.z);
+            transform.position = new Vector3(player.position.x, hit.point.y + 0.025f, player.position.z);
         }
         else {
             spriteRenderer.sprite = null;
